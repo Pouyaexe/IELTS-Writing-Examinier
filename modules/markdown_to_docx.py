@@ -1,6 +1,7 @@
 import markdown
 from docx import Document
 from bs4 import BeautifulSoup
+import io
 
 def convert_markdown_to_docx(markdown_text):
     """Convert a markdown text to a DOCX file and return it as a binary object."""
