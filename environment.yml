@@ -1,0 +1,24 @@
+name: streamlit_env
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.9
+  - beautifulsoup4=4.12.3
+  - faiss-cpu=1.8.0
+  - sentence-transformers=3.0.1
+  - cryptography
+  - pip
+  - pip:
+      - streamlit==1.38.0
+      - langchain==0.2.16
+      - langchain-google-genai==1.0.10
+      - google-api-python-client==2.143.0
+      - google-auth==2.21.0
+      - google-auth-httplib2==0.2.0
+      - google-generativeai==0.7.2
+      - google-ai-generativelanguage==0.6.6
+      - python-docx==1.1.2
+      - jsonschema==4.23.0
+      - st-copy-to-clipboard==0.1.6
+      - st-social-media-links==0.1.3
