@@ -164,3 +164,9 @@ cython_debug/
 #  and can be added to the global gitignore or merged into this file.  For a more nuclear
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
+tasks/IELTS_Writing_Task_2_Band_Descriptors.json
+tasks/General_Training_IELTS_Writing_Task_1_Band_Descriptors.json
+tasks/IELTS_Writing_Task_2_Band_Descriptors.json
+tasks/Academic_IELTS_Writing_Task_1_Band_Descriptors.json
+tasks/IELTS_Writing_Task_2_Band_Descriptors.json
+tasks/encryptc.py

@@ -3,16 +3,42 @@ import json
 from modules.api_key_utils import get_google_api_key
 from modules.llm_pipeline import setup_pipeline
 from modules.ui_components import display_feedback
+from cryptography.fernet import Fernet
 
-# Define the paths to the JSON files
-TASK_1_CRITERIA_PATH = "tasks/IELTS_Writing_Task_1_Band_Descriptors.json"
-TASK_2_CRITERIA_PATH = "tasks/IELTS_Writing_Task_2_Band_Descriptors.json"
+# Define paths to the encrypted JSON files
+TASK_1_ACADEMIC_CRITERIA_PATH = "tasks/Academic_IELTS_Writing_Task_1_Band_Descriptors.json.enc"
+TASK_1_GENERAL_TRAINING_CRITERIA_PATH = "tasks/General_Training_IELTS_Writing_Task_1_Band_Descriptors.json.enc"
+TASK_2_CRITERIA_PATH = "tasks/IELTS_Writing_Task_2_Band_Descriptors.json.enc"
+
+def load_encrypted_json(file_path, key):
+    """Load and decrypt an encrypted JSON file using the provided key."""
+    # Initialize Fernet with the given key
+    cipher = Fernet(key)
+
+    # Read and decrypt the encrypted file
+    with open(file_path, "rb") as file:
+        encrypted_data = file.read()
+    decrypted_data = cipher.decrypt(encrypted_data).decode()
+
+    # Load the decrypted JSON content
+    return json.loads(decrypted_data)
 
 def load_criteria(task_type):
     """Load the evaluation criteria based on the selected task type."""
-    file_path = TASK_1_CRITERIA_PATH if task_type == "Task 1" else TASK_2_CRITERIA_PATH
-    with open(file_path, "r") as file:
-        return json.load(file)
+    # Fetch the encryption key from Streamlit secrets
+    encryption_key = st.secrets["encryption_key"].encode()
+
+    # Select the appropriate file path
+    if task_type == "Task 1 Academic":
+        file_path = TASK_1_ACADEMIC_CRITERIA_PATH
+    elif task_type == "Task 1 General Training":
+        file_path = TASK_1_GENERAL_TRAINING_CRITERIA_PATH
+    elif task_type == "Task 2":
+        file_path = TASK_2_CRITERIA_PATH
+
+    # Load and decrypt the JSON file
+    return load_encrypted_json(file_path, encryption_key)
+
 
 def initialize_session_state():
     """Initialize session state variables."""
@@ -37,34 +63,48 @@ def reset_state():
 
 def main():
     # Set up Streamlit configuration
-    st.set_page_config(page_title="IELTS Writing Task Evaluator", page_icon="✍️")
+    st.set_page_config(page_title="EvalIELTS - Your AI Writing Evaluator", page_icon="✍️")
 
     # Initialize session state variables
     initialize_session_state()
 
-    # Step 1: Task Selection
+    # Step 1: Task Selection and Introduction
     if st.session_state["step"] == 1:
-        st.title("✍️ IELTS Writing Task Evaluator")
-        st.header("Welcome to the IELTS Writing Task Evaluator! 🎉")
+        st.title("✨ EvalIELTS: Your AI-Powered Writing Evaluator")
 
-        st.subheader(
+        st.header("Why Use EvalIELTS?")
+        st.write(
             """
-            This app is designed to help you assess your IELTS Writing responses for both Task 1 and Task 2.
-            Using AI-based evaluation, it provides detailed feedback on key criteria such as **Task Response, Coherence & Cohesion, Lexical Resource**, and **Grammatical Range & Accuracy**.
+            Getting your IELTS Writing tasks assessed can be expensive, with some services charging over $50 for just one evaluation! 💸  
+            That's why we created EvalIELTS: to provide a **cost-effective, AI-powered evaluation tool** that gives you **detailed feedback** on your writing,  
+            so you can **improve your skills** and **boost your score** — all for free!
             """
         )
+
+        st.subheader("How It Works:")
+        st.write(
+            """
+            1. **Select the IELTS Writing Task** (Task 1 Academic, Task 1 General Training, or Task 2).
+            2. **Enter the Task Question** (e.g., "Describe the process of making coffee.") and then **your response**.
+            3. Click **"Evaluate Response"** to receive detailed feedback on each criterion — including **Task Response**, **Coherence & Cohesion**, **Lexical Resource**, and **Grammatical Range & Accuracy**.
+            4. **Review your feedback** and see what to improve!
+            """
+        )
+
         st.caption("**Please Note**: This app is *not* affiliated with the official IELTS organization. It is designed as a supportive tool for self-evaluation and improvement.")
 
         st.divider()
 
         # Task selection using radio buttons
         st.subheader("Select the IELTS Writing Task to Evaluate 👇")
-        task_type = st.radio("Choose a Task", options=["Task 1 Writing ✏️", "Task 2 Writing 📝"], index=0)
+        task_type = st.radio("Choose a Task", options=["Task 1 Academic ✏️", "Task 1 General Training ✏️", "Task 2 Writing 📝"], index=0)
 
         # "Next" button to confirm selection
         if st.button("Next"):
-            if task_type == "Task 1 Writing ✏️":
-                st.session_state["task_type"] = "Task 1"
+            if task_type == "Task 1 Academic ✏️":
+                st.session_state["task_type"] = "Task 1 Academic"
+            elif task_type == "Task 1 General Training ✏️":
+                st.session_state["task_type"] = "Task 1 General Training"
             elif task_type == "Task 2 Writing 📝":
                 st.session_state["task_type"] = "Task 2"
             st.session_state["step"] = 2  # Move to the next step
@@ -134,7 +174,6 @@ def main():
         if st.button("Start Over 🔄"):
             reset_state()
             st.rerun()
-
 
 if __name__ == "__main__":
     main()
