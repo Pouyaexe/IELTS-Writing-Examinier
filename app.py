@@ -22,6 +22,18 @@ def initialize_session_state():
         st.session_state["ielts_question"] = ""
     if "user_response" not in st.session_state:
         st.session_state["user_response"] = ""
+    if "step" not in st.session_state:
+        st.session_state["step"] = 1  # Track which step the user is on
+    if "feedback_ready" not in st.session_state:
+        st.session_state["feedback_ready"] = False  # Track if feedback is ready
+
+def reset_state():
+    """Reset session state variables to start over."""
+    st.session_state["task_type"] = None
+    st.session_state["ielts_question"] = ""
+    st.session_state["user_response"] = ""
+    st.session_state["step"] = 1
+    st.session_state["feedback_ready"] = False
 
 def main():
     # Set up Streamlit configuration
@@ -30,72 +42,99 @@ def main():
     # Initialize session state variables
     initialize_session_state()
 
-    st.title("IELTS Writing Task Evaluator")
-    st.subheader("Assess your IELTS Writing Task 1 or Task 2")
+    # Step 1: Task Selection
+    if st.session_state["step"] == 1:
+        st.title("✍️ IELTS Writing Task Evaluator")
+        st.header("Welcome to the IELTS Writing Task Evaluator! 🎉")
 
-    # Task selection buttons
-    st.write("### Select the IELTS Writing Task to Evaluate")
-    col1, col2 = st.columns(2)
+        st.subheader(
+            """
+            This app is designed to help you assess your IELTS Writing responses for both Task 1 and Task 2.
+            Using AI-based evaluation, it provides detailed feedback on key criteria such as **Task Response, Coherence & Cohesion, Lexical Resource**, and **Grammatical Range & Accuracy**.
+            """
+        )
+        st.caption("**Please Note**: This app is *not* affiliated with the official IELTS organization. It is designed as a supportive tool for self-evaluation and improvement.")
 
-    # Handle task selection and store it in session state
-    with col1:
-        if st.button("Task 1 Writing"):
-            st.session_state["task_type"] = "Task 1"
+        st.divider()
 
-    with col2:
-        if st.button("Task 2 Writing"):
-            st.session_state["task_type"] = "Task 2"
+        # Task selection using radio buttons
+        st.subheader("Select the IELTS Writing Task to Evaluate 👇")
+        task_type = st.radio("Choose a Task", options=["Task 1 Writing ✏️", "Task 2 Writing 📝"], index=0)
 
-    # Check if a task has been selected
-    if st.session_state["task_type"]:
-        task_type = st.session_state["task_type"]
-        st.success(f"You selected {task_type}. Please enter your question and response below.")
+        # "Next" button to confirm selection
+        if st.button("Next"):
+            if task_type == "Task 1 Writing ✏️":
+                st.session_state["task_type"] = "Task 1"
+            elif task_type == "Task 2 Writing 📝":
+                st.session_state["task_type"] = "Task 2"
+            st.session_state["step"] = 2  # Move to the next step
+            st.rerun()  # Trigger immediate rerun to update UI
 
-        # Step 1: Ask the user to input the question they are answering
+    # Step 2: Enter Question and Response
+    elif st.session_state["step"] == 2:
+        st.header(f"You selected {st.session_state['task_type']}")
+
+        # Back button to go back to task selection
+        if st.button("⬅️ Back"):
+            st.session_state["step"] = 1
+            st.rerun()  # Trigger immediate rerun to update UI
+
+        # Input boxes for question and response
         st.session_state["ielts_question"] = st.text_area(
-            "📋 Enter the IELTS Task Question (e.g., 'Describe the process of making coffee.')",
+            "📋 Enter the IELTS Task Question",
             value=st.session_state["ielts_question"],
             height=100,
-            key="question_input",
+            help="Type the question or task description for your IELTS writing task (e.g., 'Describe the process of making coffee.')",
         )
 
-        # Step 2: Ask the user to input their response to the given question
         st.session_state["user_response"] = st.text_area(
-            f"✍️ Enter your response to the above IELTS {task_type} question here",
+            f"✍️ Enter your response to the above IELTS {st.session_state['task_type']} question here",
             value=st.session_state["user_response"],
             height=300,
-            key="response_input",
+            help="Provide your detailed response to the question above.",
         )
 
         # Button to evaluate the response
-        if st.button("Evaluate Response"):
+        if st.button("Evaluate Response 🚀"):
             # Ensure both question and response are provided
             if not st.session_state["ielts_question"].strip() or not st.session_state["user_response"].strip():
                 st.error("Please enter both the question and your response for evaluation.")
             else:
-                st.success(f"Evaluating your {task_type} response based on the context of the question...")
+                st.session_state["step"] = 3  # Move to the feedback step
+                st.rerun()  # Trigger immediate rerun to update UI
 
-                # Load the Google API key for the LLM pipeline
-                google_api_key = get_google_api_key()
+    # Step 3: Display Feedback
+    elif st.session_state["step"] == 3:
+        st.header("📝 Your Feedback is Ready!")
 
-                if google_api_key:
-                    # Set up the combined LLM pipeline for feedback and scoring
-                    combined_chain = setup_pipeline(google_api_key)
+        # Load the Google API key for the LLM pipeline
+        google_api_key = get_google_api_key()
 
-                    with st.spinner(f"Evaluating your {task_type} response..."):
-                        # Pass the question and response through the combined pipeline
-                        combined_result = combined_chain.run(
-                            {"question": st.session_state["ielts_question"], "response": st.session_state["user_response"]}
-                        )
+        if google_api_key:
+            # Set up the combined LLM pipeline for feedback and scoring
+            combined_chain = setup_pipeline(google_api_key)
 
-                        # Display the combined feedback and score
-                        display_feedback(combined_result)
+            with st.spinner(f"Evaluating your {st.session_state['task_type']} response..."):
+                # Pass the question and response through the combined pipeline
+                combined_result = combined_chain.run(
+                    {"question": st.session_state["ielts_question"], "response": st.session_state["user_response"]}
+                )
 
-                else:
-                    st.error("Google API key is required to evaluate the response.")
+                # Store the generated feedback in session state
+                st.session_state["generated_feedback"] = combined_result
+                st.session_state["feedback_ready"] = True
 
-    else:
-        st.info("Please select either 'Task 1 Writing' or 'Task 2 Writing' to get started.")
+                # Display the feedback using markdown for better formatting
+                st.subheader("📈 Detailed Feedback")
+                st.markdown(st.session_state.get("generated_feedback", "Feedback is not available."), unsafe_allow_html=True)
+        else:
+            st.error("Google API key is required to evaluate the response.")
+
+        # Start Over button to reset the app
+        if st.button("Start Over 🔄"):
+            reset_state()
+            st.rerun()
+
 
 if __name__ == "__main__":
     main()
