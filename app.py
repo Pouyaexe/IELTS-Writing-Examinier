@@ -63,20 +63,20 @@ def reset_state():
 
 def main():
     # Set up Streamlit configuration
-    st.set_page_config(page_title="EvalIELTS - Your AI Writing Evaluator", page_icon="✍️")
+    st.set_page_config(page_title="IELTSEvaL - Your AI Writing Evaluator", page_icon="✍️")
 
     # Initialize session state variables
     initialize_session_state()
 
     # Step 1: Task Selection and Introduction
     if st.session_state["step"] == 1:
-        st.title("✨ EvalIELTS: Your AI-Powered Writing Evaluator")
+        st.title("✨ IELTSEvaL: Your AI-Powered Writing Evaluator")
 
-        st.header("Why Use EvalIELTS?")
+        st.header("Why Use IELTSEvaL?")
         st.write(
             """
             Getting your IELTS Writing tasks assessed can be expensive, with some services charging over $50 for just one evaluation! 💸  
-            That's why we created EvalIELTS: to provide a **cost-effective, AI-powered evaluation tool** that gives you **detailed feedback** on your writing,  
+            That's why we created IELTSEvaL: to provide a **cost-effective, AI-powered evaluation tool** that gives you **detailed feedback** on your writing,  
             so you can **improve your skills** and **boost your score** — all for free!
             """
         )
