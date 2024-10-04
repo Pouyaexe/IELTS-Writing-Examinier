@@ -52,6 +52,8 @@ def initialize_session_state():
         st.session_state["step"] = 1  # Track which step the user is on
     if "feedback_ready" not in st.session_state:
         st.session_state["feedback_ready"] = False  # Track if feedback is ready
+    if "word_count" not in st.session_state:
+        st.session_state["word_count"] = 0  # Track the word count of the user response
 
 def reset_state():
     """Reset session state variables to start over."""
@@ -60,6 +62,7 @@ def reset_state():
     st.session_state["user_response"] = ""
     st.session_state["step"] = 1
     st.session_state["feedback_ready"] = False
+    st.session_state["word_count"] = 0
 
 def main():
     # Set up Streamlit configuration
@@ -127,6 +130,13 @@ def main():
             help="Type the question or task description for your IELTS writing task (e.g., 'Describe the process of making coffee.')",
         )
 
+        # Define the minimum word count based on the task type
+        if st.session_state["task_type"] == "Task 2":
+            min_word_count = 250
+        else:
+            min_word_count = 150
+
+        # User response input
         st.session_state["user_response"] = st.text_area(
             f"✍️ Enter your response to the above IELTS {st.session_state['task_type']} question here",
             value=st.session_state["user_response"],
@@ -134,11 +144,24 @@ def main():
             help="Provide your detailed response to the question above.",
         )
 
+        # Button to check word count
+        if st.button("Check Word Count"):
+            # Calculate the word count and store it
+            word_count = len(st.session_state["user_response"].split())
+            st.session_state["word_count"] = word_count
+            st.write(f"**Word Count**: {word_count}")
+
+        # Error messages above the Evaluate button
+        if st.session_state["user_response"].strip() and len(st.session_state["user_response"].split()) < min_word_count:
+            st.warning(f"Your response must be at least {min_word_count} words. You currently have {st.session_state['word_count']} words.")
+
         # Button to evaluate the response
         if st.button("Evaluate Response 🚀"):
             # Ensure both question and response are provided
             if not st.session_state["ielts_question"].strip() or not st.session_state["user_response"].strip():
                 st.error("Please enter both the question and your response for evaluation.")
+            elif len(st.session_state["user_response"].split()) < min_word_count:
+                st.error(f"Your response must be at least {min_word_count} words before you can proceed.")
             else:
                 st.session_state["step"] = 3  # Move to the feedback step
                 st.rerun()  # Trigger immediate rerun to update UI
@@ -155,9 +178,13 @@ def main():
             combined_chain = setup_pipeline(google_api_key)
 
             with st.spinner(f"Evaluating your {st.session_state['task_type']} response..."):
-                # Pass the question and response through the combined pipeline
+                # Pass the question, response, and word count to the LLM
                 combined_result = combined_chain.run(
-                    {"question": st.session_state["ielts_question"], "response": st.session_state["user_response"]}
+                    {
+                        "question": st.session_state["ielts_question"],
+                        "response": st.session_state["user_response"],
+                        "word_count": st.session_state["word_count"]
+                    }
                 )
 
                 # Store the generated feedback in session state
