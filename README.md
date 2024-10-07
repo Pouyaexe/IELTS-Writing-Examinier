@@ -2,6 +2,8 @@
 
 IELTSEvaL is a cost-effective, AI-powered evaluation tool that provides detailed feedback on your IELTS writing tasks. It helps you improve your writing skills and boost your IELTS score—all for free!
 
+[Link to the working demo](https://ieltseval.streamlit.app/)
+
 ## Table of Contents
 
 - [Features](#features)
