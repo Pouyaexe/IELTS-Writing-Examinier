@@ -6,9 +6,14 @@ from modules.ui_components import display_feedback
 from cryptography.fernet import Fernet
 
 # Define paths to the encrypted JSON files
-TASK_1_ACADEMIC_CRITERIA_PATH = "tasks/Academic_IELTS_Writing_Task_1_Band_Descriptors.json.enc"
-TASK_1_GENERAL_TRAINING_CRITERIA_PATH = "tasks/General_Training_IELTS_Writing_Task_1_Band_Descriptors.json.enc"
+TASK_1_ACADEMIC_CRITERIA_PATH = (
+    "tasks/Academic_IELTS_Writing_Task_1_Band_Descriptors.json.enc"
+)
+TASK_1_GENERAL_TRAINING_CRITERIA_PATH = (
+    "tasks/General_Training_IELTS_Writing_Task_1_Band_Descriptors.json.enc"
+)
 TASK_2_CRITERIA_PATH = "tasks/IELTS_Writing_Task_2_Band_Descriptors.json.enc"
+
 
 def load_encrypted_json(file_path, key):
     """Load and decrypt an encrypted JSON file using the provided key."""
@@ -22,6 +27,7 @@ def load_encrypted_json(file_path, key):
 
     # Load the decrypted JSON content
     return json.loads(decrypted_data)
+
 
 def load_criteria(task_type):
     """Load the evaluation criteria based on the selected task type."""
@@ -55,6 +61,7 @@ def initialize_session_state():
     if "word_count" not in st.session_state:
         st.session_state["word_count"] = 0  # Track the word count of the user response
 
+
 def reset_state():
     """Reset session state variables to start over."""
     st.session_state["task_type"] = None
@@ -64,9 +71,12 @@ def reset_state():
     st.session_state["feedback_ready"] = False
     st.session_state["word_count"] = 0
 
+
 def main():
     # Set up Streamlit configuration
-    st.set_page_config(page_title="IELTSEvaL - Your AI Writing Evaluator", page_icon="✍️")
+    st.set_page_config(
+        page_title="IELTSEvaL - Your AI Writing Evaluator", page_icon="✍️"
+    )
 
     # Initialize session state variables
     initialize_session_state()
@@ -94,13 +104,23 @@ def main():
             """
         )
 
-        st.caption("**Please Note**: This app is *not* affiliated with the official IELTS organization. It is designed as a supportive tool for self-evaluation and improvement.")
+        st.caption(
+            "**Please Note**: This app is *not* affiliated with the official IELTS organization. It is designed as a supportive tool for self-evaluation and improvement."
+        )
 
         st.divider()
 
         # Task selection using radio buttons
         st.subheader("Select the IELTS Writing Task to Evaluate 👇")
-        task_type = st.radio("Choose a Task", options=["Task 1 Academic ✏️", "Task 1 General Training ✏️", "Task 2 Writing 📝"], index=0)
+        task_type = st.radio(
+            "Choose a Task",
+            options=[
+                "Task 1 Academic ✏️",
+                "Task 1 General Training ✏️",
+                "Task 2 Writing 📝",
+            ],
+            index=0,
+        )
 
         # "Next" button to confirm selection
         if st.button("Next"):
@@ -152,16 +172,28 @@ def main():
             st.write(f"**Word Count**: {word_count}")
 
         # Error messages above the Evaluate button
-        if st.session_state["user_response"].strip() and len(st.session_state["user_response"].split()) < min_word_count:
-            st.warning(f"Your response must be at least {min_word_count} words. You currently have {st.session_state['word_count']} words.")
+        if (
+            st.session_state["user_response"].strip()
+            and len(st.session_state["user_response"].split()) < min_word_count
+        ):
+            st.warning(
+                f"Your response must be at least {min_word_count} words. You currently have {st.session_state['word_count']} words."
+            )
 
         # Button to evaluate the response
         if st.button("Evaluate Response 🚀"):
             # Ensure both question and response are provided
-            if not st.session_state["ielts_question"].strip() or not st.session_state["user_response"].strip():
-                st.error("Please enter both the question and your response for evaluation.")
+            if (
+                not st.session_state["ielts_question"].strip()
+                or not st.session_state["user_response"].strip()
+            ):
+                st.error(
+                    "Please enter both the question and your response for evaluation."
+                )
             elif len(st.session_state["user_response"].split()) < min_word_count:
-                st.error(f"Your response must be at least {min_word_count} words before you can proceed.")
+                st.error(
+                    f"Your response must be at least {min_word_count} words before you can proceed."
+                )
             else:
                 st.session_state["step"] = 3  # Move to the feedback step
                 st.rerun()  # Trigger immediate rerun to update UI
@@ -177,13 +209,15 @@ def main():
             # Set up the combined LLM pipeline for feedback and scoring
             combined_chain = setup_pipeline(google_api_key)
 
-            with st.spinner(f"Evaluating your {st.session_state['task_type']} response..."):
+            with st.spinner(
+                f"Evaluating your {st.session_state['task_type']} response..."
+            ):
                 # Pass the question, response, and word count to the LLM
                 combined_result = combined_chain.run(
                     {
                         "question": st.session_state["ielts_question"],
                         "response": st.session_state["user_response"],
-                        "word_count": st.session_state["word_count"]
+                        "word_count": st.session_state["word_count"],
                     }
                 )
 
@@ -193,7 +227,12 @@ def main():
 
                 # Display the feedback using markdown for better formatting
                 st.subheader("📈 Detailed Feedback")
-                st.markdown(st.session_state.get("generated_feedback", "Feedback is not available."), unsafe_allow_html=True)
+                st.markdown(
+                    st.session_state.get(
+                        "generated_feedback", "Feedback is not available."
+                    ),
+                    unsafe_allow_html=True,
+                )
         else:
             st.error("Google API key is required to evaluate the response.")
 
@@ -201,6 +240,7 @@ def main():
         if st.button("Start Over 🔄"):
             reset_state()
             st.rerun()
+
 
 if __name__ == "__main__":
     main()
